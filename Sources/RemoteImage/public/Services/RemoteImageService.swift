@@ -29,10 +29,10 @@ public final class RemoteImageService: NSObject, ObservableObject, RemoteImageSe
         self.dependencies = dependencies
     }
 
-    func fetchImage(ofType type: RemoteImageType) {
+    func fetchImage(ofType type: RemoteImageType, ignoreCache:Bool = false) {
         switch type {
         case .url(let url):
-            fetchImage(atURL: url)
+            fetchImage(atURL: url, ignoreCache)
         case .phAsset(let localIdentifier):
             fetchImage(withLocalIdentifier: localIdentifier)
         }
@@ -40,13 +40,16 @@ public final class RemoteImageService: NSObject, ObservableObject, RemoteImageSe
 }
 
 private extension RemoteImageService {
-    func fetchImage(atURL url: URL) {
+    func fetchImage(atURL url: URL, ignoreCache:Bool = false) {
         cancellable?.cancel()
 
         let cacheKey = Self.cacheKeyProvider(.url(url))
-        if let image = Self.cache.object(forKey: cacheKey) {
-            state = .image(image)
-            return
+
+        if !ignoreCache {
+	        if let image = Self.cache.object(forKey: cacheKey) {
+	            state = .image(image)
+	            return
+	        }
         }
 
         let urlRequest = URLRequest(url: url)
